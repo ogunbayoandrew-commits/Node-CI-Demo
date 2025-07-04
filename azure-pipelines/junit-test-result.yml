@@ -37,3 +37,10 @@ steps:
   inputs:
     PathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'drop'
+    # Add this after the PublishBuildArtifacts task
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<Functionapplab>'  # Replace with your Azure service connection name
+    appName: '<ogunbayoandrewlab8>'                   # Replace with your Azure App Service name
+    package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+  displayName: 'Deploy to Azure App Service'
