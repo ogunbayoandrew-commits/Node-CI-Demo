@@ -1,15 +1,16 @@
 trigger:
 - main
 
+pool:
+  name: Azure Pipelines
+
 stages:
 # 🔨 Build Stage
 - stage: Build
-  displayName: 'Build Stage'
+  displayName: 'Build and Test'
   jobs:
-  - job: BuildJob
-    displayName: 'Build Job'
-    pool:
-      name: Azure Pipelines
+  - job: Build
+    displayName: 'Build and Test'
     steps:
     - task: NodeTool@0
       inputs:
@@ -20,13 +21,13 @@ stages:
         npm install
         npm run build
         npm test
-      displayName: 'Install dependencies, build, and test'
+      displayName: 'npm install, build and test'
 
     - task: PublishTestResults@2
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/TEST-*.xml'
-      displayName: 'Publish Test Results'
+      displayName: 'Publish test results'
 
     - task: ArchiveFiles@2
       inputs:
@@ -35,31 +36,31 @@ stages:
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         replaceExistingArchive: true
-      displayName: 'Archive Build Output'
+      displayName: 'Create archive file'
 
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'drop'
-      displayName: 'Publish Build Artifacts'
+        publishLocation: 'Container'
+      displayName: 'Publish build artifacts'
 
 # 🚀 Deploy Stage
 - stage: Deploy
-  displayName: 'Deploy Stage'
+  displayName: 'Deploy to App Service'
   dependsOn: Build
-  condition: succeeded()
   jobs:
-  - job: DeployJob
-    displayName: 'Deploy to Azure App Service'
-    pool:
-      name: Azure Pipelines
+  - job: Deploy
+    displayName: 'Deploy to App Service'
     steps:
     - download: current
       artifact: drop
+      displayName: 'Download Artifacts'
 
     - task: AzureWebApp@1
       inputs:
-        azureSubscription: '<Functionapplab>'
-        appName: '<Lab6andrew>'
+        azureSubscription: 'Functionapplab'   # 🔁 Replace with your actual service connection name
+        appType: 'webApp'
+        appName: 'ogunbayoandrewlab8'                       # 🔁 Replace with your actual App Service name
         package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-      displayName: 'Deploy ZIP to Azure App Service'
+      displayName: 'Deploy to App Service'
