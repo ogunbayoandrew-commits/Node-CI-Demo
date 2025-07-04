@@ -44,3 +44,67 @@ steps:
     appName: '<Lab6andrew>'                   # Replace with your Azure App Service name
     package: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
   displayName: 'Deploy to Azure App Service'
+  trigger:
+- main
+
+pool:
+  name: Azure Pipelines
+
+stages:
+# 🔨 Build Stage
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Job'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        npm install
+        npm run build
+        npm test
+      displayName: 'Install dependencies, build, and test'
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TEST-*.xml'
+      displayName: 'Publish Test Results'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+      displayName: 'Archive Build Output'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+      displayName: 'Publish Build Artifacts'
+
+# 🚀 Deploy Stage
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: DeployJob
+    displayName: 'Deploy to Azure App Service'
+    steps:
+    - download: current
+      artifact: drop
+
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: '<ARM-connection-Andrewogunbayo>'  # replace this
+        appName: '<Lab6andrew>'                   # replace this
+        package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+      displayName: 'Deploy ZIP to Azure App Service'
