@@ -59,7 +59,7 @@ stages:
 
     - task: AzureWebApp@1
       inputs:
-        azureSubscription: '<ARM-connection-Andrewogunbayo>'
+        azureSubscription: '<Functionapplab>'
         appName: '<Lab6andrew>'
         package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
       displayName: 'Deploy ZIP to Azure App Service'
