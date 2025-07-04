@@ -60,7 +60,7 @@ stages:
     - task: AzureWebApp@1
       inputs:
         azureSubscription: 'ARM-connection-Andrewogunbayo'   # 🔁 Replace with your actual service connection name
-        appType: 'webApp'
+        appType: 'webAppLinux'
         appName: 'Lab6andrew'                       # 🔁 Replace with your actual App Service name
         package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
       displayName: 'Deploy to App Service'
