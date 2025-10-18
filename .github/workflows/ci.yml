@@ -1,50 +1,56 @@
-name: Build and Test
+name: CI/CD Pipeline
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
     branches: [ main ]
-
-
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16, 18, 20]
-
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.OS }}-node-
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm ci
 
+      - name: Build
+        run: npm run build
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Run tests
+        run: npm test
 
-    - name: Build
-      run: npm run build
+      # ✅ Archive built app (this fixes your deployment issue)
+      - name: Archive production files
+        run: |
+          mkdir -p packaged
+          cp -r * packaged/
+        # Or, if your build output is in 'dist' or 'build', adjust:
+        # cp -r dist/* packaged/
 
-    - name: Run tests
-      run: npm test
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp
+          path: packaged
 
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp
+          path: .
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
